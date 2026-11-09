@@ -1,0 +1,12 @@
+Build the GLOBAL SOLO MINERS Discord bot.
+
+Implement:
+
+1. Discord slash commands: /register, /miners, /hashrate, /stats.
+2. Register the first miner: Pantera – Bitaxe Gamma 601 – 1.2 TH/s.
+3. Store miner registrations in a persistent database.
+4. Add AUTOMATIC MINER HUNTER: daily discovery of public Bitcoin solo mining communities and public posts mentioning Bitaxe, NerdQaxe, home mining and solo mining.
+5. Save public links, remove duplicates and report new discoveries in a Discord channel.
+6. Never send unsolicited DMs or spam. Require human approval before outreach.
+7. Add clear setup instructions and required environment variables.
+8. Make the project ready for deployment without paid services.
