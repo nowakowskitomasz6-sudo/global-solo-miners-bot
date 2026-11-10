@@ -1,18 +1,17 @@
+
+
 const {
   Client,
   GatewayIntentBits,
-  REST,
-  Routes,
   SlashCommandBuilder
 } = require("discord.js");
 
 const fs = require("fs");
 
 const TOKEN = process.env.DISCORD_BOT_TOKEN;
-const APP_ID = process.env.DISCORD_APPLICATION_ID;
 
-if (!TOKEN || !APP_ID) {
-  throw new Error("Missing Discord credentials in environment variables.");
+if (!TOKEN) {
+  throw new Error("Missing DISCORD_BOT_TOKEN");
 }
 
 const DATA_FILE = "./miners.json";
@@ -29,7 +28,7 @@ function saveMiners(miners) {
 const commands = [
   new SlashCommandBuilder()
     .setName("ping")
-    .setDescription("Check if GLOBAL SOLO MINERS bot is online"),
+    .setDescription("Check if GLOBAL SOLO MINERS is online"),
 
   new SlashCommandBuilder()
     .setName("register")
@@ -49,7 +48,7 @@ const commands = [
 
   new SlashCommandBuilder()
     .setName("stats")
-    .setDescription("Show GLOBAL SOLO MINERS statistics"),
+    .setDescription("Show project statistics"),
 
   new SlashCommandBuilder()
     .setName("hashrate")
@@ -60,72 +59,86 @@ const client = new Client({
   intents: [GatewayIntentBits.Guilds]
 });
 
-async function start() {
-  const rest = new REST({ version: "10" }).setToken(TOKEN);
+client.once("ready", async () => {
+  console.log("Discord login successful.");
+  console.log(`Bot identity: ${client.user.tag}`);
+  console.log(`Application ID: ${client.application.id}`);
 
-  await rest.put(
-    Routes.applicationCommands(APP_ID),
-    { body: commands }
-  );
-
-  console.log("Slash commands registered.");
-
-  await client.login(TOKEN);
-}
-
-client.once("ready", () => {
-  console.log(`GLOBAL SOLO MINERS online as ${client.user.tag}`);
+  try {
+    await client.application.commands.set(commands);
+    console.log("Slash commands registered successfully.");
+  } catch (error) {
+    console.error("COMMAND REGISTRATION FAILED:", error.message);
+  }
 });
 
 client.on("interactionCreate", async interaction => {
   if (!interaction.isChatInputCommand()) return;
 
-  const miners = loadMiners();
+  try {
+    const miners = loadMiners();
 
-  if (interaction.commandName === "ping") {
-    return interaction.reply("GLOBAL SOLO MINERS online! +1, bez końca!");
-  }
-
-  if (interaction.commandName === "register") {
-    const miner = interaction.options.getString("miner");
-    const hashrate = interaction.options.getString("hashrate");
-
-    miners.push({
-      user: interaction.user.username,
-      miner,
-      hashrate
-    });
-
-    saveMiners(miners);
-
-    return interaction.reply(
-      `Miner registered: **${miner}** — ${hashrate}`
-    );
-  }
-
-  if (interaction.commandName === "miners") {
-    if (!miners.length) {
-      return interaction.reply("No miners registered yet. Pantera will be first!");
+    if (interaction.commandName === "ping") {
+      return interaction.reply(
+        "GLOBAL SOLO MINERS online! +1, bez końca!"
+      );
     }
 
-    return interaction.reply(
-      miners.map((m, i) =>
-        `${i + 1}. ${m.miner} — ${m.hashrate}`
-      ).join("\n")
-    );
-  }
+    if (interaction.commandName === "register") {
+      const miner = interaction.options.getString("miner");
+      const hashrate = interaction.options.getString("hashrate");
 
-  if (interaction.commandName === "stats") {
-    return interaction.reply(
-      `GLOBAL SOLO MINERS\nRegistered miners: ${miners.length}`
-    );
-  }
+      miners.push({
+        user: interaction.user.username,
+        miner,
+        hashrate
+      });
 
-  if (interaction.commandName === "hashrate") {
-    return interaction.reply(
-      "Combined hashrate will be calculated after we standardize miner hashrate units."
-    );
+      saveMiners(miners);
+
+      return interaction.reply(
+        `Miner registered: **${miner}** — ${hashrate}`
+      );
+    }
+
+    if (interaction.commandName === "miners") {
+      if (!miners.length) {
+        return interaction.reply(
+          "No miners registered yet. Pantera will be first!"
+        );
+      }
+
+      return interaction.reply(
+        miners.map((m, i) =>
+          `${i + 1}. ${m.miner} — ${m.hashrate}`
+        ).join("\n")
+      );
+    }
+
+    if (interaction.commandName === "stats") {
+      return interaction.reply(
+        `GLOBAL SOLO MINERS\nRegistered miners: ${miners.length}`
+      );
+    }
+
+    if (interaction.commandName === "hashrate") {
+      return interaction.reply(
+        "Combined hashrate calculation is being prepared."
+      );
+    }
+  } catch (error) {
+    console.error("COMMAND ERROR:", error.message);
+
+    if (!interaction.replied && !interaction.deferred) {
+      await interaction.reply({
+        content: "An internal error occurred.",
+        ephemeral: true
+      });
+    }
   }
 });
 
-start().catch(console.error);
+client.login(TOKEN).catch(error => {
+  console.error("DISCORD LOGIN FAILED:", error.message);
+  process.exit(1);
+});
