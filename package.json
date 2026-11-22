@@ -4,7 +4,7 @@
   "description": "Global Solo Miners Discord Bot",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node -r ./telegramPublisher.js index.js"
   },
   "dependencies": {
     "discord.js": "^14.21.0",
